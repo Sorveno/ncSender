@@ -26,7 +26,7 @@
         <div class="acc-sidebar-actions">
           <button class="acc-pair-btn" v-if="!pairing" :disabled="!dongleReady || busy"
                   :title="dongleReady ? `Open a ${PAIR_WINDOW_SECONDS}s pairing window`
-                                      : 'Requires an activated Wireless USB'"
+                                      : '1111111Requires an activated Wireless USB'"
                   @click="pairDevice">
             <span class="acc-pair-plus" aria-hidden="true">+</span> Pair Device
           </button>
