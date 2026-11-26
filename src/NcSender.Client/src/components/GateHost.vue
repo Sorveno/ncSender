@@ -8,7 +8,10 @@
       :close-on-backdrop-click="false"
       :z-index="10050 + index"
     >
-      <GatePanel :gate="gate" @respond="onRespond" @fire-step="onFireStep" />
+      <WorkOffsetGate v-if="gate.data?.kind === 'work-offset'" :gate="gate" @respond="onRespond" />
+      <UnhomedGate v-else-if="gate.data?.kind === 'unhomed'" :gate="gate" @respond="onRespond" />
+      <StepGate v-else-if="gate.data?.kind === 'steps'" :gate="gate" @respond="onRespond" @fire-step="onFireStep" />
+      <GatePanel v-else :gate="gate" @respond="onRespond" @fire-step="onFireStep" />
     </Dialog>
   </template>
 </template>
@@ -16,6 +19,9 @@
 <script setup lang="ts">
 import Dialog from './Dialog.vue';
 import GatePanel from './GatePanel.vue';
+import StepGate from './StepGate.vue';
+import UnhomedGate from './UnhomedGate.vue';
+import WorkOffsetGate from './WorkOffsetGate.vue';
 import { useGateDialog } from '../composables/useGateDialog';
 
 const { gates, respond, fireStep } = useGateDialog();

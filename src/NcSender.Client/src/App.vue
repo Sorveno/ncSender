@@ -253,7 +253,7 @@
                   </div>
                 </div>
                 <div class="setting-input-with-unit">
-                  <input type="number" class="setting-input" v-model.number="safeZHeight" :min="safeZMin" :max="0" :step="safeZStep" @change="saveSafeZHeight" />
+                  <UnitInput :unit="unitsPreference === 'imperial' ? 'in' : 'mm'" class="setting-input" v-model="safeZHeight" @change="saveSafeZHeight" />
                   <span class="setting-unit">{{ unitsPreference === 'imperial' ? 'in' : 'mm' }}</span>
                 </div>
               </div>
@@ -279,6 +279,19 @@
                   <option :value="500">Medium (500ms)</option>
                   <option :value="1000">Long (1s)</option>
                   <option :value="2000">Extra Long (2s)</option>
+                </select>
+              </div>
+              <div class="setting-item setting-item--with-note">
+                <div class="setting-item-content">
+                  <label class="setting-label">Work Offset After Reset</label>
+                  <div class="settings-note">
+                    A Stop or a program's end (M30) puts the controller back in G54. When you were in G55 to G59: ask whether to switch back, always switch back (shown in the console), or stay in G54 without asking.
+                  </div>
+                </div>
+                <select class="setting-select" v-model="workOffsetAfterReset" @change="saveWorkOffsetAfterReset">
+                  <option value="ask">Ask</option>
+                  <option value="switch">Always switch back</option>
+                  <option value="stay">Always stay in G54</option>
                 </select>
               </div>
               <div class="setting-item setting-item--with-note">
@@ -1104,6 +1117,7 @@
 </template>
 
 <script setup lang="ts">
+import UnitInput from '@/components/UnitInput.vue';
 import { computed, reactive, ref, watch, watchEffect, onMounted, onUnmounted, nextTick } from 'vue';
 import AppShell from './shell/AppShell.vue';
 import TopToolbar from './shell/TopToolbar.vue';
@@ -1513,9 +1527,9 @@ const allSettingsTabs = [
   { id: 'firmware', label: 'Firmware', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.496 8a4.5 4.5 0 0 1-1.703 3.526L9.497 8.5l2.959-1.11q.04.3.04.61"/><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-1 0a7 7 0 1 0-13.202 3.249l1.988-1.657a4.5 4.5 0 0 1 7.537-4.623L7.497 6.5l1 2.5 1.333 3.11c-.56.251-1.18.39-1.833.39a4.5 4.5 0 0 1-1.592-.29L4.747 14.2A7 7 0 0 0 15 8m-8.295.139a.25.25 0 0 0-.288-.376l-1.5.5.159.474.808-.27-.595.894a.25.25 0 0 0 .287.376l.808-.27-.595.894a.25.25 0 0 0 .287.376l1.5-.5-.159-.474-.808.27.596-.894a.25.25 0 0 0-.288-.376l-.808.27z"/></svg>' },
   { id: 'config', label: 'Config', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5zM4.5 12.5A.5.5 0 0 1 5 12h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 10h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 8h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 4h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5"/></svg>' },
   { id: 'plugins', label: 'Plugin Manager', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.545 6.714 4.11 8H3a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h1.110l.436 1.286A1 1 0 0 0 5.494 13h.557a1 1 0 0 0 .948-.714L7.435 11h1.130l.436 1.286A1 1 0 0 0 9.949 13h.557a1 1 0 0 0 .948-.714L11.89 11H13a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-1.11l-.436-1.286A1 1 0 0 0 10.506 6h-.557a1 1 0 0 0-.948.714L8.565 8H7.435L7 6.714A1 1 0 0 0 6.052 6h-.557a1 1 0 0 0-.948.714M6.724 9.5 6.27 11h-.48L5.335 9.5h1.389m3.553 0h1.389l-.455 1.5h-.479zm-5 1L4.822 9H3.5v1.5zm9 0V9h-1.323l-.455 1.5z"/></svg>' },
-  { id: 'logs', label: 'Logs', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/><path d="M4.5 12.5A.5.5 0 0 1 5 12h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 10h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 8h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 4h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5"/></svg>' },
   { id: 'backup', label: 'Backup', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' },
-  { id: 'advanced', label: 'Advanced', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' }
+  { id: 'advanced', label: 'Advanced', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' },
+  { id: 'logs', label: 'Logs', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/><path d="M4.5 12.5A.5.5 0 0 1 5 12h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 10h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 8h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m0-2A.5.5 0 0 1 5 4h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5"/></svg>' },
 ];
 const settingsTabs = computed(() =>
   allSettingsTabs.filter(t => {
@@ -1650,6 +1664,7 @@ const consoleSettings = reactive({
 
 // Stop deceleration delay (pause before soft reset)
 const pauseBeforeStop = ref(initialSettings?.pauseBeforeStop ?? 500);
+const workOffsetAfterReset = ref(initialSettings?.workOffsetAfterReset ?? 'ask');
 
 const pollingInterval = ref(initialSettings?.pollingInterval ?? 100);
 
@@ -2066,6 +2081,10 @@ onMounted(() => {
       if (typeof detail.jog.feedRate === 'number') {
         jogConfig.feedRate = detail.jog.feedRate;
       }
+    }
+    // "Always switch back" picked in the work offset popup, on any screen.
+    if (typeof detail?.workOffsetAfterReset === 'string') {
+      workOffsetAfterReset.value = detail.workOffsetAfterReset;
     }
     // Update debug logging state when settings change
     if (typeof detail?.debugLogging === 'boolean') {
@@ -2896,6 +2915,11 @@ const savePauseBeforeStop = async () => {
   await updateSettings({
     pauseBeforeStop: Number(pauseBeforeStop.value)
   });
+};
+
+const saveWorkOffsetAfterReset = async () => {
+  const { updateSettings } = await import('./lib/settings-store.js');
+  await updateSettings({ workOffsetAfterReset: workOffsetAfterReset.value });
 };
 
 const savePollingInterval = async () => {

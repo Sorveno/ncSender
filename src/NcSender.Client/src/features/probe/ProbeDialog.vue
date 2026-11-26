@@ -97,7 +97,7 @@
               <template v-if="probeType === '3d-probe'">
                 <div class="probe-control-row">
                   <div class="probe-control-group">
-                    <label class="probe-label">Diameter</label>
+                    <label class="probe-label">Tip Diameter</label>
                     <div class="probe-input-wrapper probe-stepper-field">
                         <ProbeStepper
                           :model-value="ballPointDiameterInput"
@@ -481,12 +481,8 @@
 
                       <!-- Custom diameter input -->
                       <div class="custom-dropdown__item custom-dropdown__item--input" @click.stop>
-                        <input
-                          v-model.number="newCustomDiameter"
-                          type="number"
-                          :step="fineLengthStep"
-                          :min="lim(0.1)"
-                          :max="lim(50)"
+                        <UnitInput :unit="lengthUnit"
+                          v-model="newCustomDiameter"
                           class="custom-dropdown__input"
                           :placeholder="`Custom diameter (${lengthUnit})`"
                           @click.stop
@@ -548,12 +544,8 @@
 
                       <!-- Custom diameter input -->
                       <div class="custom-dropdown__item custom-dropdown__item--input" @click.stop>
-                        <input
-                          v-model.number="newStandardBlockDiameter"
-                          type="number"
-                          :step="fineLengthStep"
-                          :min="lim(0.1)"
-                          :max="lim(50)"
+                        <UnitInput :unit="lengthUnit"
+                          v-model="newStandardBlockDiameter"
                           class="custom-dropdown__input"
                           :placeholder="`Custom diameter (${lengthUnit})`"
                           @click.stop
@@ -619,6 +611,7 @@
 </template>
 
 <script setup lang="ts">
+import UnitInput from '@/components/UnitInput.vue';
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import type { Ref } from 'vue';
 import Dialog from '../../components/Dialog.vue';
